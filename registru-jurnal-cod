@@ -1,0 +1,292 @@
+function validateEntry(){
+  //sheet ul curent
+  var myGoogleSheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  var contaForm = myGoogleSheet.getSheetByName("Introducere Date");
+
+  var ui = SpreadsheetApp.getUi();
+
+  contaForm.getRange("C4").setBackground('#FFFFFF');
+  contaForm.getRange("C6").setBackground('#FFFFFF');
+  contaForm.getRange("C8").setBackground('#FFFFFF');
+  contaForm.getRange("C10").setBackground('#FFFFFF');
+  contaForm.getRange("C12").setBackground('#FFFFFF');
+  contaForm.getRange("C14").setBackground('#FFFFFF');
+
+  //Valideaza intrarea
+  if(contaForm.getRange("C4").isBlank()==true){
+
+    ui.alert("Introdu data");
+
+    contaForm.getRange("C4").activate();
+    contaForm.getRange("C4").setBackground('#FF0000');
+    return false;
+  }
+
+  //Valideaza intrarea
+  if(contaForm.getRange("C6").isBlank()==true){
+
+    ui.alert("Introdu numele documentului");
+
+    contaForm.getRange("C6").activate();
+    contaForm.getRange("C6").setBackground('#FF0000');
+    return false;
+  }
+
+  //Valideaza intrarea
+  if(contaForm.getRange("C8").isBlank()==true){
+
+    ui.alert("Introdu explicația");
+
+    contaForm.getRange("C8").activate();
+    contaForm.getRange("C8").setBackground('#FF0000');
+    return false;
+  }
+
+  //Valideaza intrarea
+  if(contaForm.getRange("C10").isBlank()==true){
+
+    ui.alert("Introdu un client sau un furnizor");
+
+    contaForm.getRange("C10").activate();
+    contaForm.getRange("C10").setBackground('#FF0000');
+    return false;
+  }
+
+  //Valideaza intrarea
+  if(contaForm.getRange("C12").isBlank()==true){
+
+    ui.alert("Introdu modalitatea de plată");
+
+    contaForm.getRange("C12").activate();
+    contaForm.getRange("C12").setBackground('#FF0000');
+    return false;
+  }
+
+  //Valideaza intrarea
+  if(contaForm.getRange("C14").isBlank()==true){
+
+    ui.alert("Introdu valoarea în lei");
+
+    contaForm.getRange("C14").activate();
+    contaForm.getRange("C14").setBackground('#FF0000');
+    return false;
+  }
+
+  return true;
+}
+
+//trimite datele catre intrari
+function submitData(){
+
+  var myGoogleSheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  var contaForm = myGoogleSheet.getSheetByName("Introducere Date");
+
+  var dataSheet = myGoogleSheet.getSheetByName("Intrări");
+
+  var ui = SpreadsheetApp.getUi();
+
+  var raspuns = ui.alert("Trimite", "Vrei să trimiți intrarea?", ui.ButtonSet.YES_NO);
+
+  //verificam ce a selectat utilizatorul
+
+  if(raspuns == ui.Button.NO){
+    return;
+  }
+
+  if(validateEntry()==true){
+
+    if(contaForm.getRange("B15").getValue()!="" && contaForm.getRange("C15").getValue()!=""){//AMORTIZARE
+
+      var aniAmortizare = contaForm.getRange("C15").getValue();
+
+      var sumaTotala =  contaForm.getRange("C14").getValue();
+
+      var sumaAmortizare = sumaTotala/(aniAmortizare*12);
+
+      for(var i=1; i<((aniAmortizare*12)+1); i++){
+
+        var dataAchiztie = contaForm.getRange("C4").getValue();
+
+        var lunaAchizitie = dataAchiztie.getMonth();
+
+        dataAchiztie.setMonth(lunaAchizitie+i); //INCREMENTARE DATA-INCEPAND CU LUNA DUPA ACHIZITIE
+        
+
+        //INTRODUCERE DATE
+        var blankRow = dataSheet.getLastRow()+1;
+
+        //ID
+        var idRow = dataSheet.getLastRow();
+        var idToUse = dataSheet.getRange(idRow,1).getValue()+1;
+
+        dataSheet.getRange(blankRow,1).setValue(idToUse.toString());
+        //valori
+        dataSheet.getRange(blankRow,2).setValue(dataAchiztie);//DATA
+        dataSheet.getRange(blankRow,3).setValue(contaForm.getRange("C6").getValue());
+        dataSheet.getRange(blankRow,4).setValue(contaForm.getRange("C8").getValue());
+        
+        //FURNIZOR - Plată
+        
+        dataSheet.getRange(blankRow,6).setValue(contaForm.getRange("C10").getValue());
+
+        //modalitate de plata - CASH
+        if(contaForm.getRange("C12").getValue()=="Numerar"){
+          dataSheet.getRange(blankRow,9).setValue(sumaAmortizare);
+        }
+        //modalitate de plata - CARD
+        if(contaForm.getRange("C12").getValue()=="Bancă"){
+          dataSheet.getRange(blankRow,10).setValue(sumaAmortizare);
+        }
+        
+        //Inregistrat pe
+        dataSheet.getRange(blankRow,12).setValue(new Date()).setNumberFormat('yyyy-mm-dd h:mm');
+        //Inregistrat de
+        dataSheet.getRange(blankRow,11).setValue(Session.getActiveUser().getEmail());
+
+      }
+
+      contaForm.getRange("C4").clear();
+      contaForm.getRange("C6").clear();
+      contaForm.getRange("C8").clear();
+      contaForm.getRange("C10").clear();
+      contaForm.getRange("C12").clear();
+      contaForm.getRange("C14").clear();
+      contaForm.getRange("C15").clear();
+
+      ui.alert(' "Amortizarea a fost înregistrară. " ');
+    }      
+    else{
+      var blankRow = dataSheet.getLastRow()+1;
+
+      //ID
+      var idRow = dataSheet.getLastRow();
+      var idToUse = dataSheet.getRange(idRow,1).getValue()+1;
+
+      dataSheet.getRange(blankRow,1).setValue(idToUse.toString());
+      //valori
+      dataSheet.getRange(blankRow,2).setValue(contaForm.getRange("C4").getValue());
+      dataSheet.getRange(blankRow,3).setValue(contaForm.getRange("C6").getValue());
+      dataSheet.getRange(blankRow,4).setValue(contaForm.getRange("C8").getValue());
+      
+      //FURNIZOR - Plată
+      if(contaForm.getRange("B10").getValue()=="Furnizor"){
+
+        dataSheet.getRange(blankRow,6).setValue(contaForm.getRange("C10").getValue());
+
+        //modalitate de plata - CASH
+        if(contaForm.getRange("C12").getValue()=="Numerar"){
+          dataSheet.getRange(blankRow,9).setValue(contaForm.getRange("C14").getValue());
+        }
+        //modalitate de plata - CARD
+        if(contaForm.getRange("C12").getValue()=="Bancă"){
+          dataSheet.getRange(blankRow,10).setValue(contaForm.getRange("C14").getValue());
+        }
+      }
+      //CLIENT - Încasare
+      if(contaForm.getRange("B10").getValue()=="Client"){
+
+        dataSheet.getRange(blankRow,5).setValue(contaForm.getRange("C10").getValue());
+
+        //modalitate de plata - CASH
+        if(contaForm.getRange("C12").getValue()=="Numerar"){
+          dataSheet.getRange(blankRow,7).setValue(contaForm.getRange("C14").getValue());
+        }
+        //modalitate de plata - CARD
+        if(contaForm.getRange("C12").getValue()=="Bancă"){
+          dataSheet.getRange(blankRow,8).setValue(contaForm.getRange("C14").getValue());
+        }
+      }
+      //Inregistrat pe
+      dataSheet.getRange(blankRow,12).setValue(new Date()).setNumberFormat('yyyy-mm-dd h:mm');
+      //Inregistrat de
+      dataSheet.getRange(blankRow,11).setValue(Session.getActiveUser().getEmail());
+
+      ui.alert(' "Intrare nouă cu numărul  ' + idToUse.toString() +' a fost înregistrară. " ');
+
+      contaForm.getRange("C4").clear();
+      contaForm.getRange("C6").clear();
+      contaForm.getRange("C8").clear();
+      contaForm.getRange("C10").clear();
+      contaForm.getRange("C12").clear();
+      contaForm.getRange("C14").clear();
+    }
+  }
+}
+
+function addToList(){
+  var myGoogleSheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  var contaForm = myGoogleSheet.getSheetByName("Introducere Date");
+
+  var clientSheet = myGoogleSheet.getSheetByName("Clienți");
+
+  var furnizSheet = myGoogleSheet.getSheetByName("Furnizori");
+
+  var ui = SpreadsheetApp.getUi();
+
+  if(contaForm.getRange("C10").isBlank()!=true){
+
+    var raspuns = ui.alert("Adaugă", "Vrei să adaugi în listă?", ui.ButtonSet.YES_NO);
+
+    //verificam ce a selectat utilizatorul
+
+    if(raspuns == ui.Button.NO){
+      return;
+    }
+
+    if(raspuns == ui.Button.YES){
+      //CLIENT
+      if(contaForm.getRange("B10").getValue()=="Client"){
+        var blankRow = clientSheet.getLastRow()+1;
+        //ID
+        var idRow = clientSheet.getLastRow();
+        var idToUse = clientSheet.getRange(idRow,1).getValue()+1;
+
+        clientSheet.getRange(blankRow,1).setValue(idToUse.toString());
+        //ADAUGA CLIENT
+        clientSheet.getRange(blankRow,2).setValue(contaForm.getRange("C10").getValue());
+        ui.alert(' "Clientul cu numărul  ' + idToUse.toString() +' a fost înregistrat. " ');
+      }
+      //FURNIZOR
+      if(contaForm.getRange("B10").getValue()=="Furnizor"){
+        var blankRow = furnizSheet.getLastRow()+1;
+        //ID
+        var idRow = furnizSheet.getLastRow();
+        var idToUse = furnizSheet.getRange(idRow,1).getValue()+1;
+
+        furnizSheet.getRange(blankRow,1).setValue(idToUse.toString());
+        //ADAUGA CLIENT
+        furnizSheet.getRange(blankRow,2).setValue(contaForm.getRange("C10").getValue());
+
+        ui.alert(' "Furnizorul cu numărul  ' + idToUse.toString() +' a fost înregistrat. " ');
+      }
+    }
+  }
+  else{
+    ui.alert("Introdu un client sau un furnizor");
+
+    contaForm.getRange("C10").activate();
+    contaForm.getRange("C10").setBackground('#FF0000');
+    return false;
+  }
+
+
+}
+
+function getToday(){
+  var myGoogleSheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  var contaForm = myGoogleSheet.getSheetByName("Introducere Date");
+
+  contaForm.getRange("C4").setValue(new Date()).setNumberFormat('mm/dd/yyyy');
+}
+
+function useConvValue(){
+  var myGoogleSheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  var contaForm = myGoogleSheet.getSheetByName("Introducere Date");
+
+  contaForm.getRange("C14").setValue(contaForm.getRange("G15").getValue());
+}
